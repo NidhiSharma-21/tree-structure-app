@@ -30,7 +30,7 @@ const Toolbar = () => {
   return (
     <div className="flex justify-between items-center bg-white/80 p-6 rounded-2xl shadow-xl border border-gray-200">
       {/* Title */}
-      <h2 className="text-2xl font-bold text-gray-800 tracking-wide">🌳 Tree Structure</h2>
+      <h2 className="text-2xl font-bold text-gray-800 tracking-wide">🌳 Tree Flow </h2>
 
       {/* Button Group */}
       <div className="flex space-x-4">
