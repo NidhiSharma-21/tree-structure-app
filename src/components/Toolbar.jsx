@@ -7,12 +7,23 @@ import { Plus, Edit, Trash } from "lucide-react";
 const Toolbar = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [editingNode, setEditingNode] = useState(null);
+  const [newNodeData, setNewNodeData] = useState({ title: "", question: "" });
   const dispatch = useDispatch();
   const nodes = useSelector((state) => state.tree.nodes);
 
-  const handleAddNode = (node) => {
-    dispatch(addNode(node));
+  const handleAddNode = () => setIsOpen(true);
+
+  const handleSaveNewNode = () => {
+    if (!newNodeData.title || !newNodeData.question) return;
+    const newNode = {
+      id: Date.now(),
+      title: newNodeData.title,
+      question: newNodeData.question,
+      parentId: nodes.length > 0 ? nodes[nodes.length - 1].id : null,
+    };
+    dispatch(addNode(newNode));
     setIsOpen(false);
+    setNewNodeData({ title: "", question: "" });
   };
 
   const handleEditNode = (node) => {
@@ -22,58 +33,60 @@ const Toolbar = () => {
 
   const handleDeleteNode = () => {
     if (nodes.length > 0) {
-      const lastNode = nodes[nodes.length - 1];
-      dispatch(deleteNode(lastNode.id));
+      dispatch(deleteNode(nodes[nodes.length - 1].id));
     }
   };
 
   return (
-    <div className="flex justify-between items-center bg-white/80 p-6 rounded-2xl shadow-xl border border-gray-200">
-      {/* Title */}
-      <h2 className="text-2xl font-bold text-gray-800 tracking-wide">🌳 Tree Flow </h2>
+    <div className="flex flex-col sm:flex-row justify-between items-center bg-white p-4 sm:p-6 rounded-2xl shadow-xl border border-gray-200 w-full max-w-5xl mx-auto">
+      <h2 className="text-xl sm:text-2xl font-bold text-gray-800 tracking-wide mb-4 sm:mb-0">
+        🌳 Tree Flow
+      </h2>
 
-      {/* Button Group */}
-      <div className="flex space-x-4">
-        {/* Add Node Button */}
+      <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4 w-full sm:w-auto">
         <button
-          onClick={() => setIsOpen(true)}
-          className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-orange-400 text-white px-5 py-2.5 rounded-lg shadow-md hover:scale-105 hover:shadow-lg transition-all duration-300"
+          onClick={handleAddNode}
+          className="flex items-center justify-center gap-2 bg-orange-500 text-white px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg shadow-md w-full sm:w-auto text-sm sm:text-base"
         >
-          <Plus size={20} /> <span className="font-medium">Add Node</span>
+          <Plus size={16} /> <span>Add Node</span>
         </button>
 
-        {/* Edit Node Button */}
         <button
-          onClick={() =>
-            setEditingNode(nodes.length > 0 ? nodes[nodes.length - 1] : null)
-          }
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg shadow-md transition-all duration-300 ${
-            nodes.length === 0
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-blue-500 to-blue-400 text-white hover:scale-105 hover:shadow-lg"
+          onClick={() => setEditingNode(nodes.length > 0 ? nodes[nodes.length - 1] : null)}
+          className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg shadow-md w-full sm:w-auto text-sm sm:text-base ${
+            nodes.length === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-blue-500 text-white"
           }`}
           disabled={nodes.length === 0}
         >
-          <Edit size={20} /> <span className="font-medium">Edit Node</span>
+          <Edit size={16} /> <span>Edit Node</span>
         </button>
 
-        {/* Delete Node Button */}
         <button
           onClick={handleDeleteNode}
-          className={`flex items-center gap-2 px-5 py-2.5 rounded-lg shadow-md transition-all duration-300 ${
-            nodes.length === 0
-              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-              : "bg-gradient-to-r from-red-500 to-red-400 text-white hover:scale-105 hover:shadow-lg"
+          className={`flex items-center justify-center gap-2 px-4 sm:px-5 py-2 sm:py-2.5 rounded-lg shadow-md w-full sm:w-auto text-sm sm:text-base ${
+            nodes.length === 0 ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-red-500 text-white"
           }`}
           disabled={nodes.length === 0}
         >
-          <Trash size={20} /> <span className="font-medium">Delete Node</span>
+          <Trash size={16} /> <span>Delete Node</span>
         </button>
       </div>
 
-      {/* Modals */}
-      {isOpen && <Modal onClose={() => setIsOpen(false)} onSave={handleAddNode} />}
-      {editingNode && <Modal node={editingNode} onClose={() => setEditingNode(null)} onSave={handleEditNode} />}
+      {isOpen && (
+        <Modal
+          onClose={() => setIsOpen(false)}
+          onSave={handleSaveNewNode}
+          nodeData={newNodeData}
+          setNodeData={setNewNodeData}
+        />
+      )}
+      {editingNode && (
+        <Modal
+          node={editingNode}
+          onClose={() => setEditingNode(null)}
+          onSave={handleEditNode}
+        />
+      )}
     </div>
   );
 };

@@ -1,83 +1,146 @@
 import React, { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { deleteNode, addNode } from "../redux/treeSlice";
-import Modal from "./Modal";
-import { PencilSquareIcon, TrashIcon, PlusIcon } from "@heroicons/react/24/outline";
+import { useDispatch } from "react-redux";
+import { addNode, updateNode, deleteNode } from "../redux/treeSlice";
+import { Plus, Edit, Trash, Check, X } from "lucide-react";
 
-const TreeNode = () => {
-  const nodes = useSelector((state) => state.tree.nodes);
-  const dispatch = useDispatch();
-  const [editingNode, setEditingNode] = useState(null);
+const TreeNode = ({ node }) => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [newTitle, setNewTitle] = useState(node?.title || "");
+  const [newQuestion, setNewQuestion] = useState(node?.question || "");
   const [isAddingChild, setIsAddingChild] = useState(false);
-  const [parentNode, setParentNode] = useState(null);
+  const [childTitle, setChildTitle] = useState("");
+  const [childQuestion, setChildQuestion] = useState("");
+  const [childCount, setChildCount] = useState(1);
+  const dispatch = useDispatch();
 
-  const handleAddChildNode = (parentNode) => {
-    setParentNode(parentNode);
-    setEditingNode(null);
+  const handleEdit = () => {
+    if (!newTitle.trim() || !newQuestion.trim()) return;
+    dispatch(updateNode({ ...node, title: newTitle, question: newQuestion }));
+    setIsEditing(false);
+  };
+
+  const handleDelete = () => {
+    dispatch(deleteNode(node.id));
+  };
+
+  const handleAddChild = () => {
     setIsAddingChild(true);
   };
 
-  return (
-    <div className="mt-8 p-6 max-w-3xl mx-auto bg-white shadow-lg rounded-xl border border-gray-300">
-      <h2 className="text-xl font-bold text-gray-800 text-center mb-4">Tree Structure</h2>
+  const confirmAddChild = () => {
+    if (!childTitle.trim() || !childQuestion.trim()) return;
 
-      {nodes.length === 0 ? (
-        <p className="text-center text-gray-500 text-lg font-semibold">No nodes available</p>
+    const newChild = {
+      id: Date.now(),
+      title: childTitle,
+      question: childQuestion,
+      parentId: node.id,
+      children: [],
+    };
+
+    dispatch(addNode(newChild));
+
+    if (childCount > 1) {
+      setChildCount(childCount - 1);
+    } else {
+      setIsAddingChild(false);
+      setChildTitle("");
+      setChildQuestion("");
+      setChildCount(1);
+    }
+  };
+
+  return (
+    <div className="p-4 sm:p-6 bg-white border border-gray-200 rounded-xl shadow-md hover:shadow-lg transition duration-200 w-full max-w-2xl mx-auto">
+      {isEditing ? (
+        <div className="space-y-3">
+          <input
+            type="text"
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter title..."
+          />
+          <textarea
+            value={newQuestion}
+            onChange={(e) => setNewQuestion(e.target.value)}
+            className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Enter question..."
+          />
+          <div className="flex flex-wrap gap-3">
+            <button onClick={handleEdit} className="bg-blue-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-blue-700 transition">
+              Save
+            </button>
+            <button onClick={() => setIsEditing(false)} className="bg-gray-300 px-4 py-2 rounded-md shadow-md hover:bg-gray-400 transition">
+              Cancel
+            </button>
+          </div>
+        </div>
       ) : (
-        <ul className="space-y-4">
-          {nodes.map((node) => (
-            <li
-              key={node.id}
-              className="flex justify-between items-center p-5 bg-gray-50 rounded-lg shadow-md border border-gray-300 hover:shadow-lg transition-all duration-300"
-            >
-              <div>
-                <h3 className="text-lg font-semibold text-gray-800">{node.title}</h3>
-                <p className="text-sm text-gray-600 mt-1">{node.question}</p>
-                {/* Child Count Badge */}
-                <span className="inline-block px-3 py-1 mt-2 text-xs font-semibold text-white bg-gray-700 rounded-full">
-                  Children: {node.children}
-                </span>
-              </div>
-              <div className="flex space-x-2">
-                {/* Edit Button */}
-                <button
-                  onClick={() => setEditingNode(node)}
-                  className="p-2 rounded-full text-blue-500 bg-blue-100 hover:bg-blue-200 transition duration-200"
-                >
-                  <PencilSquareIcon className="w-5 h-5" />
-                </button>
-                {/* Delete Button */}
-                <button
-                  onClick={() => dispatch(deleteNode(node.id))}
-                  className="p-2 rounded-full text-red-500 bg-red-100 hover:bg-red-200 transition duration-200"
-                >
-                  <TrashIcon className="w-5 h-5" />
-                </button>
-                {/* Add Child Button */}
-                <button
-                  onClick={() => handleAddChildNode(node)}
-                  className="p-2 rounded-full text-green-500 bg-green-100 hover:bg-green-200 transition duration-200"
-                >
-                  <PlusIcon className="w-5 h-5" />
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
+        <div>
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">{node.title}</h3>
+            <span className="bg-gray-100 text-gray-600 text-xs font-medium px-3 py-1 rounded-full">
+              {node.children.length} {node.children.length === 1 ? "Child" : "Children"}
+            </span>
+          </div>
+          <p className="text-sm text-gray-700 mt-2">{node.question}</p>
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button onClick={() => setIsEditing(true)} className="flex items-center gap-2 text-blue-600 hover:text-blue-800 transition">
+              <Edit size={18} /> Edit
+            </button>
+            <button onClick={handleDelete} className="flex items-center gap-2 text-red-600 hover:text-red-800 transition">
+              <Trash size={18} /> Delete
+            </button>
+            <button onClick={handleAddChild} className="flex items-center gap-2 text-green-600 hover:text-green-800 transition">
+              <Plus size={18} /> Add Child
+            </button>
+          </div>
+        </div>
       )}
-      {/* Modals */}
-      {editingNode && (
-        <Modal node={editingNode} onClose={() => setEditingNode(null)} />
-      )}
+
       {isAddingChild && (
-        <Modal
-          parentNode={parentNode}
-          onClose={() => setIsAddingChild(false)}
-          onSave={(newChildNode) => {
-            dispatch(addNode({ ...newChildNode, parentNodeId: parentNode.id }));
-            setIsAddingChild(false);
-          }}
-        />
+        <div className="mt-5 p-4 bg-gray-50 border border-gray-200 rounded-lg">
+          <h4 className="text-md font-medium text-gray-800">
+            Enter Child Node Details ({childCount} remaining)
+          </h4>
+          <input
+            type="text"
+            value={childTitle}
+            onChange={(e) => setChildTitle(e.target.value)}
+            className="w-full mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Child Title..."
+          />
+          <textarea
+            value={childQuestion}
+            onChange={(e) => setChildQuestion(e.target.value)}
+            className="w-full mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            placeholder="Child Question/Statement..."
+          />
+          <input
+            type="number"
+            value={childCount}
+            onChange={(e) => setChildCount(Math.max(1, parseInt(e.target.value, 10)))}
+            className="w-full mt-2 p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+            min="1"
+          />
+          <div className="flex flex-wrap gap-3 mt-4">
+            <button onClick={confirmAddChild} className="bg-green-600 text-white px-4 py-2 rounded-md shadow-md hover:bg-green-700 transition flex items-center">
+              <Check size={18} className="mr-2" /> Add
+            </button>
+            <button onClick={() => setIsAddingChild(false)} className="bg-gray-300 px-4 py-2 rounded-md shadow-md hover:bg-gray-400 transition flex items-center">
+              <X size={18} className="mr-2" /> Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {node.children.length > 0 && (
+        <div className="ml-4 sm:ml-6 mt-5 border-l-4 border-gray-300 pl-4 sm:pl-6">
+          {node.children.map((child) => (
+            <TreeNode key={child.id} node={child} />
+          ))}
+        </div>
       )}
     </div>
   );
